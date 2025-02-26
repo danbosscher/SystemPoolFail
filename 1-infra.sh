@@ -21,7 +21,6 @@ if ! terraform apply -parallelism=10 -auto-approve tfplan; then
 fi
 
 echo "Deployment completed successfully!"
-echo "Setting up kubectl context..."
-az aks get-credentials -g $(terraform output -raw resource_group_name) -n $(terraform output -raw standard_aks_name) --admin
-az aks get-credentials -g $(terraform output -raw resource_group_name) -n $(terraform output -raw automatic_aks_name) --admin
-kubectl config get-contexts
+echo "Run these commands to set up kubectl..."
+echo "az aks get-credentials -g $(terraform output -raw resource_group_name) -n $(terraform output -raw standard_aks_name) --admin"
+echo "az aks get-credentials -g $(terraform output -raw resource_group_name) -n $(terraform output -raw automatic_aks_name) --admin"

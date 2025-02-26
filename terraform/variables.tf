@@ -88,7 +88,7 @@ variable "max_node_count" {
 variable "aad_tenant_id" {
   description = "Azure Active Directory tenant ID for AKS cluster integration"
   type        = string
-  default     = "72f988bf-86f1-41af-91ab-2d7cd011db47"  # Default Microsoft tenant ID
+  # No default - this should be provided in terraform.tfvars or as a command-line variable
 }
 
 variable "aad_admin_group_object_id" {
