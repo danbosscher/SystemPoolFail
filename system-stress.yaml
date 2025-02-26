@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: system-stress
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: system-stress
+  template:
+    metadata:
+      labels:
+        app: system-stress
+    spec:
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      containers:
+      - name: stress
+        image: polinux/stress
+        resources:
+          limits:
+            cpu: "3.5"
+            memory: "1Gi"
+        command: ["stress"]
+        args: ["--cpu", "4", "--io", "3", "--vm", "2", "--vm-bytes", "512M", "--timeout", "600s"]
