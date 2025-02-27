@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: virtual-worker
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: virtual-worker
@@ -12,20 +12,42 @@ spec:
       labels:
         app: virtual-worker
     spec:
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
       nodeSelector:
         "kubernetes.io/os": linux
       containers:
       - name: virtual-worker
+        {{- if .Values.imageRegistry }}
+        image: {{ .Values.imageRegistry }}/{{ .Values.virtualWorker.image.repository }}:{{ .Values.virtualWorker.image.tag }}
+        {{- else }}
         image: {{ .Values.virtualWorker.image.repository }}:{{ .Values.virtualWorker.image.tag }}
+        {{- end }}
         env:
         - name: MAKELINE_SERVICE_URL
-          value: http://makeline-service:3001
-        - name: ORDERS_PER_HOUR
-          value: "175"
+          value: "http://makeline-service:3000"
+        - name: ORDER_SERVICE_URL
+          value: "http://order-service:3000"
+        ports:
+        - containerPort: 3000
         resources:
           requests:
-            cpu: 1m
-            memory: 1Mi
+            memory: 50Mi
+            cpu: 20m
           limits:
-            cpu: 2m
-            memory: 20Mi
+            memory: 100Mi
+            cpu: 50m
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          failureThreshold: 3

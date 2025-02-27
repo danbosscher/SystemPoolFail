@@ -12,49 +12,50 @@ spec:
       labels:
         app: store-admin
     spec:
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
       nodeSelector:
         "kubernetes.io/os": linux
       containers:
       - name: store-admin
+        {{- if .Values.imageRegistry }}
+        image: {{ .Values.imageRegistry }}/{{ .Values.storeAdmin.image.repository }}:{{ .Values.storeAdmin.image.tag }}
+        {{- else }}
         image: {{ .Values.storeAdmin.image.repository }}:{{ .Values.storeAdmin.image.tag }}
+        {{- end }}
         ports:
-        - containerPort: 8081
-          name: store-admin
-        env:
-        - name: VUE_APP_PRODUCT_SERVICE_URL
-          value: "http://product-service:3002/"
-        - name: VUE_APP_MAKELINE_SERVICE_URL
-          value: "http://makeline-service:3001/"
-        - name: VUE_APP_AI_SERVICE_URL               # this key/value pair is to support previous versions of store-admin <= 1.1.0
-          value: "http://ai-service:5001/"           # container images hosted on ghcr.io and will be removed in future releases
+        - containerPort: 8000
         resources:
           requests:
-            cpu: 1m
-            memory: 200Mi
+            cpu: 50m
+            memory: 64Mi
           limits:
-            cpu: 1000m
-            memory: 512Mi
+            cpu: 100m
+            memory: 128Mi
         startupProbe:
           httpGet:
-            path: /health
-            port: 8081
-          failureThreshold: 3
+            path: /
+            port: 8000
+          failureThreshold: 10
           initialDelaySeconds: 5
+          timeoutSeconds: 3
           periodSeconds: 5
         readinessProbe:
           httpGet:
-            path: /health
-            port: 8081
-          failureThreshold: 3
-          initialDelaySeconds: 3
-          periodSeconds: 5
+            path: /
+            port: 8000
+          failureThreshold: 10
+          initialDelaySeconds: 5
+          timeoutSeconds: 3
+          periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /health
-            port: 8081
-          failureThreshold: 5
-          initialDelaySeconds: 3
-          periodSeconds: 3
+            path: /
+            port: 8000
+          failureThreshold: 10
+          initialDelaySeconds: 5
+          timeoutSeconds: 3
+          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -63,7 +64,8 @@ metadata:
 spec:
   type: {{ .Values.storeAdmin.serviceType }}
   ports:
-  - port: 80
-    targetPort: 8081
+  - name: http
+    port: 8000
+    targetPort: 8000
   selector:
     app: store-admin

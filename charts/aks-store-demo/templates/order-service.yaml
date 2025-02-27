@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: order-service-configs
-data:  
+data:
   {{- if eq .Values.useAzureAd true }}
   USE_WORKLOAD_IDENTITY_AUTH: "true"
   {{- else }}
@@ -41,52 +41,77 @@ spec:
         {{- if eq .Values.useAzureAd true }}
         azure.workload.identity/use: "true"
         {{- end }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8088"
     spec:
       {{- if eq .Values.useAzureAd true }}
       serviceAccount: {{ .Values.managedIdentityName }}
       {{- end }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
       nodeSelector:
         "kubernetes.io/os": linux
       containers:
       - name: order-service
+        {{- if .Values.imageRegistry }}
+        image: {{ .Values.imageRegistry }}/{{ .Values.orderService.image.repository }}:{{ .Values.orderService.image.tag }}
+        {{- else }}
         image: {{ .Values.orderService.image.repository }}:{{ .Values.orderService.image.tag }}
+        {{- end }}
+        env:
+        {{- if eq .Values.useAzureAd true }}
+        - name: USE_AZURE_AD
+          value: "True"
+        {{- end }}
+        - name: QUEUE_HOST
+          value: {{ .Values.orderService.queueHost }}
+        - name: QUEUE_PORT
+          value: {{ .Values.orderService.queuePort | quote }}
+        {{- if .Values.orderService.queueTransport }}
+        - name: QUEUE_TRANSPORT
+          value: {{ .Values.orderService.queueTransport }}
+        {{- end }}
+        - name: QUEUE_NAME
+          value: {{ .Values.orderService.queueName }}
+        - name: QUEUE_USERNAME
+          value: {{ .Values.orderService.queueUsername }}
+        - name: QUEUE_PASSWORD
+          value: {{ .Values.orderService.queuePassword }}
         ports:
         - containerPort: 3000
-        envFrom:
-        - configMapRef:
-            name: order-service-configs
-        {{- if eq .Values.useAzureAd false }}
-        - secretRef:
-            name: order-service-secrets
-        {{- end }}
-        resources:
-          requests:
-            cpu: 1m
-            memory: 50Mi
-          limits:
-            cpu: 75m
-            memory: 128Mi
+        - containerPort: 8088
         startupProbe:
           httpGet:
             path: /health
             port: 3000
-          failureThreshold: 5
-          initialDelaySeconds: 20
-          periodSeconds: 10
+          initialDelaySeconds: 5
+          failureThreshold: 20
+          timeoutSeconds: 3
+          periodSeconds: 5
         readinessProbe:
           httpGet:
             path: /health
             port: 3000
-          failureThreshold: 3
           initialDelaySeconds: 3
-          periodSeconds: 5
+          failureThreshold: 10
+          timeoutSeconds: 3
+          periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /health
             port: 3000
-          failureThreshold: 5
           initialDelaySeconds: 3
-          periodSeconds: 3
+          failureThreshold: 10
+          timeoutSeconds: 3
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 20m
+            memory: 50Mi
+          limits:
+            cpu: 50m
+            memory: 100Mi
       {{- if eq .Values.useRabbitMQ true }}
       initContainers:
       - name: wait-for-rabbitmq
@@ -111,5 +136,8 @@ spec:
   - name: http
     port: 3000
     targetPort: 3000
+  - name: metrics
+    port: 8088
+    targetPort: 8088
   selector:
     app: order-service

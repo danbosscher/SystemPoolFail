@@ -96,3 +96,9 @@ variable "aad_admin_group_object_id" {
   type        = string
   # No default - this should be provided in terraform.tfvars or as a command-line variable
 }
+
+variable "acr_name" {
+  description = "Name of the Azure Container Registry"
+  type        = string
+  default     = "akstakedowndemoacr"  # Make sure this is globally unique
+}

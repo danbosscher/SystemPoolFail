@@ -7,7 +7,7 @@ data:
   AZURE_OPENAI_ENDPOINT: "{{ .Values.aiService.openAiEndpoint }}"
   AZURE_OPENAI_DEPLOYMENT_NAME: "{{ .Values.aiService.modelDeploymentName }}"
   {{- /*
-  Use Azure OpenAI or OpenAI  
+  Use Azure OpenAI or OpenAI
   */}}
   {{- if eq .Values.aiService.useAzureOpenAi true }}
   USE_AZURE_OPENAI: "True"
@@ -16,7 +16,7 @@ data:
   OPENAI_ORG_ID: "{{ .Values.aiService.openAiOrgId }}"
   {{- end }}
   {{- /*
-  Use Azure AD or OpenAI API Key  
+  Use Azure AD or OpenAI API Key
   */}}
   {{- if eq .Values.useAzureAd true }}
   USE_AZURE_AD: "True"
@@ -70,11 +70,17 @@ spec:
       {{- if eq .Values.useAzureAd true }}
       serviceAccount: {{ .Values.managedIdentityName }}
       {{- end }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
       nodeSelector:
         "kubernetes.io/os": linux
       containers:
       - name: ai-service
+        {{- if .Values.imageRegistry }}
+        image: {{ .Values.imageRegistry }}/{{ .Values.aiService.image.repository }}:{{ .Values.aiService.image.tag }}
+        {{- else }}
         image: {{ .Values.aiService.image.repository }}:{{ .Values.aiService.image.tag }}
+        {{- end }}
         ports:
         - containerPort: 5001
         envFrom:

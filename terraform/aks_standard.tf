@@ -10,6 +10,15 @@ resource "azurerm_kubernetes_cluster" "aks_standard" {
   # Enable Azure Policy
   azure_policy_enabled = true
 
+  # Enable RBAC
+  role_based_access_control_enabled = true
+  azure_active_directory_role_based_access_control {
+    managed                = true
+    admin_group_object_ids = [var.aad_admin_group_object_id]
+    azure_rbac_enabled     = true
+    tenant_id              = var.aad_tenant_id
+  }
+
   # Enable Azure Monitor
   oms_agent {
     log_analytics_workspace_id = azurerm_log_analytics_workspace.aks.id

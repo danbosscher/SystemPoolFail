@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: makeline-service-configs
-data:  
+data:
   {{- if eq .Values.useAzureAd false }}
   ORDER_QUEUE_URI: "{{ .Values.makelineService.orderQueueUri }}"
   ORDER_QUEUE_USERNAME: "{{ .Values.makelineService.orderQueueUsername }}"
@@ -49,51 +49,92 @@ spec:
         {{- if eq .Values.useAzureAd true }}
         azure.workload.identity/use: "true"
         {{- end }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8088"
     spec:
       {{- if eq .Values.useAzureAd true }}
       serviceAccount: {{ .Values.managedIdentityName }}
       {{- end }}
       nodeSelector:
         "kubernetes.io/os": linux
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
       containers:
       - name: makeline-service
+        {{- if .Values.imageRegistry }}
+        image: {{ .Values.imageRegistry }}/{{ .Values.makelineService.image.repository }}:{{ .Values.makelineService.image.tag }}
+        {{- else }}
         image: {{ .Values.makelineService.image.repository }}:{{ .Values.makelineService.image.tag }}
-        ports:
-        - containerPort: 3001
-        envFrom:
-        - configMapRef:
-            name: makeline-service-configs
-        {{- if and (eq .Values.useAzureAd false) .Values.makelineService.orderDBUsername .Values.makelineService.orderDBPassword }}
-        - secretRef:
-            name: makeline-service-secrets
         {{- end }}
+        imagePullPolicy: Always
+        env:
+        - name: ORDER_QUEUE_NAME
+          value: {{ .Values.makelineService.orderQueueName }}
+        {{- if and .Values.makelineService.orderQueueHost .Values.makelineService.orderQueueUri }}
+        - name: ORDER_QUEUE_HOST
+          value: {{ .Values.makelineService.orderQueueHost }}
+        - name: ORDER_QUEUE_URI
+          value: {{ .Values.makelineService.orderQueueUri }}
+        {{- end }}
+        - name: ORDER_DB_API
+          value: {{ .Values.makelineService.orderDBApi }}
+        - name: ORDER_DB_URI
+          value: {{ .Values.makelineService.orderDBUri }}
+        - name: ORDER_DB_NAME
+          value: {{ .Values.makelineService.orderDBName }}
+        - name: ORDER_DB_COLLECTION_NAME
+          value: {{ .Values.makelineService.orderDBCollectionName }}
+        - name: ORDER_DB_CONTAINER_NAME
+          value: {{ .Values.makelineService.orderDBContainerName }}
+        {{- if and .Values.makelineService.orderDBUsername .Values.makelineService.orderDBPassword }}
+        - name: ORDER_DB_USERNAME
+          value: {{ .Values.makelineService.orderDBUsername }}
+        - name: ORDER_DB_PASSWORD
+          value: {{ .Values.makelineService.orderDBPassword }}
+        {{- end }}
+        {{- if eq .Values.useAzureAd true }}
+        - name: USE_AZURE_AD
+          value: "True"
+        {{- end }}
+        - name: ORDER_QUEUE_USERNAME
+          value: {{ .Values.makelineService.orderQueueUsername }}
+        - name: ORDER_QUEUE_PASSWORD
+          value: {{ .Values.makelineService.orderQueuePassword }}
+        ports:
+        - containerPort: 3000
+        - containerPort: 8088
         resources:
           requests:
-            cpu: 1m
-            memory: 6Mi
+            memory: 50Mi
+            cpu: 20m
           limits:
-            cpu: 5m
-            memory: 20Mi
+            memory: 150Mi
+            cpu: 50m
         startupProbe:
           httpGet:
             path: /health
-            port: 3001
-          failureThreshold: 10
+            port: 3000
+          initialDelaySeconds: 10
+          failureThreshold: 20
+          timeoutSeconds: 3
           periodSeconds: 5
         readinessProbe:
           httpGet:
             path: /health
-            port: 3001
-          failureThreshold: 3
+            port: 3000
           initialDelaySeconds: 3
-          periodSeconds: 5
+          failureThreshold: 10
+          timeoutSeconds: 3
+          periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /health
-            port: 3001
-          failureThreshold: 5
+            port: 3000
           initialDelaySeconds: 3
-          periodSeconds: 3
+          failureThreshold: 10
+          timeoutSeconds: 3
+          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -103,7 +144,10 @@ spec:
   type: ClusterIP
   ports:
   - name: http
-    port: 3001
-    targetPort: 3001
+    port: 3000
+    targetPort: 3000
+  - name: metrics
+    port: 8088
+    targetPort: 8088
   selector:
     app: makeline-service

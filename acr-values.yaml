@@ -1,0 +1,2 @@
+imageRegistry: "akstakedowndemoacr.azurecr.io"
+imagePullSecrets: []
