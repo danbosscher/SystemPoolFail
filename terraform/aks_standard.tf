@@ -14,6 +14,7 @@ resource "azurerm_kubernetes_cluster" "aks_standard" {
   azure_active_directory_role_based_access_control {
     # Note: 'managed = true' is required for now but will be removed and defaulted to 'true'
     # in AzureRM provider v4.0 as legacy Azure AD integration is deprecated
+    managed                = true
     admin_group_object_ids = [var.aad_admin_group_object_id]
     azure_rbac_enabled     = true
     tenant_id              = var.aad_tenant_id

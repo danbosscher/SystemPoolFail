@@ -22,34 +22,28 @@ The repository includes a stress test to overload the system node pool and measu
 - **Helm**
 - Quota available for the requested VM sizes in the target region
 - an Azure Entra ID group and tenant
+- Registered for the SKU preview for Automatic
 
-### 2. Test prerequisites are installed
+
+
+### Test prerequisites are set up correctly
 ```sh
 ./0-test-prereqs.sh
 ```
 
-List of SKU options that are in all 3 zones (replace northeurope):
+### Pick a SKU that's in all 3 zones (or edit configuration accordingly)
+
+Capacity: List of SKU options that are in all 3 zones (replace northeurope):
 ```
  az vm list-skus --location northeurope --resource-type virtualMachines --output table | grep -E "1,2,3" | grep -v "NotAvailableForSubscription"
 ```
-List of SKU options that are in all 3 zones (replace northeurope and SKUs from previous result):
+Quota: List of SKU options  (replace northeurope, then add SKUs from previous command output):
 ```
 az vm list-usage --location northeurope --output table | grep -E "Total Regional|standard Dadv6|standard Dalv6|standard Dav6|standard Eadv6|standard Eav6|Standard Falsv6|Standard Famsv6|Standard Fasv6|Standard M"
 ```
 
 ## Configuration Options
-
-Key variables that can be customized (set in `terraform.tfvars` or via command line):
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `location` | northeurope | Azure region for deployment |
-| `sku` | Standard_D8ds_v4 | VM size for node pools |
-| `kubernetes_version` | 1.30.9 | Kubernetes version |
-| `system_node_count` | 3 | Initial system nodes per cluster |
-| `user_node_count` | 3 | Initial user nodes per cluster |
-| `deploy_standard` | true | Set to false to skip standard cluster |
-| `deploy_automatic` | true | Set to false to skip automatic cluster |
+Key variables can be customized in `terraform.tfvars`, such as region, SKU and K8s version.
 
 ## Infrastructure Deployment
 
@@ -86,38 +80,7 @@ az provider register --namespace Microsoft.ContainerService
 ./4-stresstest.sh
 ```
 
-Or manually:
-```sh
-kubectl apply -f system-stress.yaml
-kubectl delete pods -n kube-system -l k8s-app=kube-dns
-kubectl get pods -n kube-system -w
-```
-
-### 5. Testing and Monitoring
-
-#### Verify Repository Setup
-Run the test script to verify that your environment has all the prerequisites and the repository is set up correctly:
-```sh
-./test-functionality.sh
-```
-
-This will check for required tools, validate your terraform configuration, and verify cluster existence (if already deployed).
-
-#### Continuous Cluster Monitoring
-To continuously monitor the health of your AKS clusters and detect any system pool failures:
-```sh
-./monitor-clusters.sh
-```
-
-This script checks:
-- Node status in both clusters
-- System pods health
-- Headlamp installation status
-- System pool resource usage
-
-Press Ctrl+C to stop monitoring.
-
-### 6. Cleanup
+### 5. Cleanup
 ```sh
 ./5-cleanup.sh
 ```
