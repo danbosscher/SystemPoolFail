@@ -10,6 +10,10 @@ terraform {
       version = "~> 1.5"
       # Required for AKS Automatic SKU which is not yet supported in the azurerm provider
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
   }
 }
 

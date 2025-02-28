@@ -58,15 +58,6 @@ variable "user_node_count" {
   type        = number
 }
 
-variable "tags" {
-  description = "Tags to apply to all resources"
-  type        = map(string)
-  default     = {
-    Environment = "Demo"
-    Project     = "AKS-Comparison"
-  }
-}
-
 variable "zones" {
   description = "Availability zones for node pools"
   type        = list(number)
@@ -98,7 +89,7 @@ variable "aad_admin_group_object_id" {
 }
 
 variable "acr_name" {
-  description = "Name of the Azure Container Registry"
+  description = "Prefix for the Azure Container Registry name"
   type        = string
-  default     = "akstakedowndemoacr"  # Make sure this is globally unique
+  default     = "acr"  # This will be combined with the random string
 }

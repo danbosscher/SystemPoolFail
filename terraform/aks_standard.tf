@@ -5,7 +5,6 @@ resource "azurerm_kubernetes_cluster" "aks_standard" {
   resource_group_name = azurerm_resource_group.aks_rg.name
   kubernetes_version  = var.kubernetes_version
   dns_prefix          = "${var.aks_standard_name}-dns"
-  tags                = var.tags
 
   # Enable Azure Policy
   azure_policy_enabled = true
@@ -13,7 +12,8 @@ resource "azurerm_kubernetes_cluster" "aks_standard" {
   # Enable RBAC
   role_based_access_control_enabled = true
   azure_active_directory_role_based_access_control {
-    managed                = true
+    # Note: 'managed = true' is required for now but will be removed and defaulted to 'true'
+    # in AzureRM provider v4.0 as legacy Azure AD integration is deprecated
     admin_group_object_ids = [var.aad_admin_group_object_id]
     azure_rbac_enabled     = true
     tenant_id              = var.aad_tenant_id
@@ -57,7 +57,6 @@ resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
   enable_auto_scaling  = var.enable_auto_scaling
   min_count            = var.user_node_count
   max_count            = var.max_node_count
-  tags                 = var.tags
 
   lifecycle {
     ignore_changes = [

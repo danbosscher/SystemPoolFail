@@ -15,14 +15,18 @@ The repository includes a stress test to overload the system node pool and measu
 
 ## Prerequisites
 
-- **Terraform** (latest version recommended)
-- **Azure CLI** (latest version recommended)
-- **kubectl** (latest version recommended)
+- **Terraform** (
+- **Azure CLI**
+- **kubectl**
 - **kubelogin**
-- **Helm** (latest version recommended)
-- Azure subscription with required permissions
+- **Helm**
 - Quota available for the requested VM sizes in the target region
 - an Azure Entra ID group and tenant
+
+### 2. Test prerequisites are installed
+```sh
+./0-test-prereqs.sh
+```
 
 List of SKU options that are in all 3 zones (replace northeurope):
 ```
@@ -62,33 +66,58 @@ az provider register --namespace Microsoft.ContainerService
 ./1-infra.sh
 ```
 
-### 2. Deploy AKS Store Demo chart
+### 2. Import AKS Store Demo and other images to ACR
 ```sh
-./2-aks-store-demo.sh
+./2-import-images.sh
 ```
 
-## Review monitoring
-Azure Monitor for Containers is automatically configured during deployment:
+### 3a (optional). Use helm to install the AKS Store Demo so we have something to test against in user land
+```sh
+./3-aks-store-demo-optional.sh
+```
 
-- Navigate to the Azure Portal > Resource Group > AKS cluster > Insights
-- Monitor node health, pod health, and container metrics from outside the cluster
-- View logs and metrics even if the cluster becomes unresponsive
-- Use the following KQL queries for advanced monitoring during stress tests:
+### 3b (optional). Use helm to install Headlamp
+```sh
+./3b-headlamp-optional.sh
+```
 
-## System Stress test
+### 4. System Stress test
+```sh
+./4-stresstest.sh
+```
 
-
-### 5. Perform System Stress Test
+Or manually:
 ```sh
 kubectl apply -f system-stress.yaml
 kubectl delete pods -n kube-system -l k8s-app=kube-dns
 kubectl get pods -n kube-system -w
 ```
-- This overloads system nodes and deletes CoreDNS to observe failure impact.
-- Check Grafana for error rates and node health.
+
+### 5. Testing and Monitoring
+
+#### Verify Repository Setup
+Run the test script to verify that your environment has all the prerequisites and the repository is set up correctly:
+```sh
+./test-functionality.sh
+```
+
+This will check for required tools, validate your terraform configuration, and verify cluster existence (if already deployed).
+
+#### Continuous Cluster Monitoring
+To continuously monitor the health of your AKS clusters and detect any system pool failures:
+```sh
+./monitor-clusters.sh
+```
+
+This script checks:
+- Node status in both clusters
+- System pods health
+- Headlamp installation status
+- System pool resource usage
+
+Press Ctrl+C to stop monitoring.
 
 ### 6. Cleanup
 ```sh
-terraform destroy
-kubectl delete daemonset system-stress -n kube-system
+./5-cleanup.sh
 ```

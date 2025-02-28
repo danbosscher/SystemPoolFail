@@ -1,11 +1,15 @@
+resource "random_string" "acr_suffix" {
+  length  = 6
+  special = false
+  upper   = false
+}
+
 resource "azurerm_container_registry" "acr" {
-  name                = var.acr_name
+  name                = "${var.acr_name}${random_string.acr_suffix.result}"
   resource_group_name = azurerm_resource_group.aks_rg.name
   location            = azurerm_resource_group.aks_rg.location
   sku                 = "Standard"
   admin_enabled       = true
-
-  tags = var.tags
 }
 
 # Assign AcrPull role to both AKS clusters if they exist

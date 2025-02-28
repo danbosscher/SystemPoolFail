@@ -57,6 +57,5 @@ resource "azapi_resource" "aks_automatic" {
       name = "Automatic"
       tier = "Standard"
     }
-    tags = var.tags
   })
 }

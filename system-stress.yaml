@@ -19,7 +19,7 @@ spec:
         key: node-role.kubernetes.io/master
       containers:
       - name: stress
-        image: polinux/stress
+        image: akstakedowndemoacr.azurecr.io/stress:latest
         resources:
           limits:
             cpu: "3.5"

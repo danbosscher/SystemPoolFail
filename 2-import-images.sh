@@ -22,6 +22,7 @@ declare -A IMAGES=(
   ["ghcr.io/azure-samples/aks-store-demo/virtual-worker:latest"]="${ACR_NAME}/aks-store-demo/virtual-worker:latest"
   ["mcr.microsoft.com/mirror/docker/library/rabbitmq:3.10-management-alpine"]="${ACR_NAME}/library/rabbitmq:3.10-management-alpine"
   ["mcr.microsoft.com/mirror/docker/library/mongo:4.2"]="${ACR_NAME}/library/mongo:4.2"
+  ["polinux/stress"]="${ACR_NAME}/stress:latest"
 )
 
 echo "🔄 Importing images to $ACR_NAME..."
@@ -44,11 +45,4 @@ for SOURCE_IMAGE in "${!IMAGES[@]}"; do
   echo "✅ Successfully imported $(basename $SOURCE_IMAGE | cut -d':' -f1)"
 done
 
-echo "✅ All images have been successfully imported to $ACR_NAME"
-echo ""
-
-echo ""
-echo "To update your Helm values, create a values override file with:"
-echo ""
-echo "imageRegistry: \"$ACR_NAME\""
-echo ""
+echo "✅ All images have been imported to $ACR_NAME"
