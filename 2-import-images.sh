@@ -23,6 +23,7 @@ declare -A IMAGES=(
   ["mcr.microsoft.com/mirror/docker/library/rabbitmq:3.10-management-alpine"]="${ACR_NAME}/library/rabbitmq:3.10-management-alpine"
   ["mcr.microsoft.com/mirror/docker/library/mongo:4.2"]="${ACR_NAME}/library/mongo:4.2"
   ["polinux/stress"]="${ACR_NAME}/stress:latest"
+  ["ghcr.io/headlamp-k8s/headlamp:v0.29.0"]="${ACR_NAME}/headlamp:v0.29.0"
 )
 
 echo "🔄 Importing images to $ACR_NAME..."

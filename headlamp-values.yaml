@@ -1,0 +1,18 @@
+# Custom values for Headlamp deployed from ACR
+image:
+  registry: "acrrandom1234971nls.azurecr.io"
+  repository: "headlamp"
+  tag: "v0.29.0"
+  pullPolicy: IfNotPresent
+
+# Configure image pull secrets (using AKS-ACR integration)
+imagePullSecrets: []
+
+# Add resource limits to satisfy container policy
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
