@@ -115,7 +115,11 @@ spec:
       {{- if eq .Values.useRabbitMQ true }}
       initContainers:
       - name: wait-for-rabbitmq
+        {{- if .Values.imageRegistry }}
+        image: {{ .Values.imageRegistry }}/busybox:latest
+        {{- else }}
         image: busybox
+        {{- end }}
         command: ['sh', '-c', 'until nc -zv rabbitmq 5672; do echo waiting for rabbitmq; sleep 2; done;']
         resources:
           requests:

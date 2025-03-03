@@ -5,8 +5,9 @@ image:
   tag: "v0.29.0"
   pullPolicy: IfNotPresent
 
-# Configure image pull secrets (using AKS-ACR integration)
-imagePullSecrets: []
+# Configure image pull secrets
+imagePullSecrets:
+  - name: acr-auth
 
 # Add resource limits to satisfy container policy
 resources:

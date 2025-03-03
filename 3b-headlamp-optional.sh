@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Source common functions
+source "$(dirname "$0")/common-functions.sh"
+
 # Get resource group and cluster names from Terraform
 cd "$(dirname "$0")/terraform"
 ACR_NAME=$(terraform output -raw acr_login_server)
@@ -12,6 +15,9 @@ cd ..
 echo "📦 Using Azure Container Registry: $ACR_NAME"
 echo "🔑 Getting credentials for AKS clusters..."
 
+# Update headlamp-values.yaml with the current ACR name
+update_headlamp_values "$ACR_NAME"
+
 # Standard Cluster (if deployed)
 if [ -n "$STANDARD_AKS_NAME" ]; then
   echo "🚀 Connecting to Standard AKS Cluster: $STANDARD_AKS_NAME"
@@ -19,6 +25,9 @@ if [ -n "$STANDARD_AKS_NAME" ]; then
 
   echo "📦 Installing Headlamp on Standard cluster..."
   kubectl create namespace headlamp --dry-run=client -o yaml | kubectl apply -f -
+
+  # Create ACR pull secret for Headlamp
+  create_acr_pull_secret "headlamp" "$ACR_NAME"
 
   # Use our local chart with custom values
   helm upgrade --install headlamp ./charts/headlamp \
@@ -35,6 +44,9 @@ if [ -n "$AUTOMATIC_AKS_NAME" ]; then
 
   echo "📦 Installing Headlamp on Automatic cluster..."
   kubectl create namespace headlamp --dry-run=client -o yaml | kubectl apply -f -
+
+  # Create ACR pull secret for Headlamp
+  create_acr_pull_secret "headlamp" "$ACR_NAME"
 
   # Use our local chart with custom values
   helm upgrade --install headlamp ./charts/headlamp \
